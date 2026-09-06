@@ -214,7 +214,3 @@ Item tanpa ID tidak dapat diminta detailnya. Untuk error HTTP atau error jaringa
 - Sinkronisasi background membutuhkan konfigurasi API yang sudah tertangkap sebelumnya.
 - Event WebSocket hanya diproses jika payload memiliki field ID yang dikenali.
 - Tidak ada test runner atau proses build otomatis di repository ini.
-
-## Lisensi
-
-Repository ini belum menyertakan file lisensi. Tambahkan lisensi yang sesuai sebelum mendistribusikan ekstensi kepada pihak lain.
