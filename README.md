@@ -1,6 +1,6 @@
-# Auto Order Scanner & Incremental Sync
+# Scrapper Order Jeje
 
-Ekstensi browser Chromium Manifest V3 untuk menangkap data order atau bidding dari aplikasi web yang sedang dibuka, mengambil detail booking, dan mengekspor hasilnya sebagai JSON.
+Ekstensi browser Scrapper Order Jeje untuk menangkap data order atau bidding dari aplikasi web yang sedang dibuka, mengambil detail booking, dan mengekspor hasilnya sebagai JSON.
 
 Ekstensi ini ditujukan untuk aplikasi web yang menggunakan endpoint daftar berikut:
 
