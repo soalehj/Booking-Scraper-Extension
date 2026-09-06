@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; width: 320px; padding: 14px; margin: 0; background: #f8fafc; color: #1e293b; }
+    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+    .title { font-size: 13px; font-weight: 700; color: #0f172a; display: flex; justify-content: space-between; align-items: center; }
+    .badge { font-size: 10px; padding: 2px 8px; border-radius: 12px; font-weight: 600; background: #dcfce7; color: #15803d; }
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+    .metric-box { background: #f1f5f9; padding: 8px; border-radius: 6px; text-align: center; }
+    .metric-num { font-size: 18px; font-weight: 700; color: #2563eb; }
+    .metric-label { font-size: 10px; color: #64748b; font-weight: 600; }
+    .btn { width: 100%; padding: 8px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-bottom: 6px; font-size: 11px; }
+    .btn-extract { background: #16a34a; color: #ffffff; }
+    .btn-extract:hover { background: #15803d; }
+    .btn-check { background: #2563eb; color: #ffffff; }
+    .btn-check:hover { background: #1d4ed8; }
+    .btn-rescan { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .btn-rescan:hover { background: #e2e8f0; }
+    .btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+    #syncTime { font-size: 10px; color: #94a3b8; text-align: center; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="title">
+      <span>Order Monitor</span>
+      <span class="badge">Live Sync Active</span>
+    </div>
+
+    <div class="metrics">
+      <div class="metric-box">
+        <div id="statTotal" class="metric-num">0</div>
+        <div class="metric-label">TOTAL DATA</div>
+      </div>
+      <div class="metric-box">
+        <div id="statNew" class="metric-num" style="color: #eab308;">0</div>
+        <div class="metric-label">ORDER BARU</div>
+      </div>
+    </div>
+
+    <button id="checkNewBtn" class="btn btn-check">Cek Order Baru</button>
+    <button id="fullScanBtn" class="btn btn-rescan">Reset & Full Scan</button>
+    <button id="extractBtn" class="btn btn-extract" disabled>Unduh Hasil JSON</button>
+    <div id="syncTime">Menunggu data...</div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
