@@ -1,5 +1,5 @@
 (function () {
-  const TARGET_ENDPOINT = '/api/line_haul/agency/booking/bidding/list';
+  const TARGET_ENDPOINT = '[Endpoint URL]'; // Replace with the actual endpoint you want to capture
 
   function getAbsoluteUrl(url) {
     try {

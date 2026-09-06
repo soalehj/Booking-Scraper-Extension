@@ -1,216 +1,177 @@
-# Scrapper Order Jeje
+# Booking Scraper Extension
 
-Ekstensi browser Scrapper Order Jeje untuk menangkap data order atau bidding dari aplikasi web yang sedang dibuka, mengambil detail booking, dan mengekspor hasilnya sebagai JSON.
+Ekstensi browser Manifest V3 untuk menangkap konfigurasi request daftar booking/order dari aplikasi web yang sedang dibuka, mengambil data secara bertahap, menambahkan detail per item, dan mengekspor dataset sebagai JSON.
 
-Ekstensi ini ditujukan untuk aplikasi web yang menggunakan endpoint daftar berikut:
+Repository ini adalah template yang perlu disesuaikan dengan API platform target. Nilai endpoint di source code masih berupa placeholder, sehingga ekstensi belum dapat digunakan sebelum konfigurasi endpoint diisi.
 
-```text
-/api/line_haul/agency/booking/bidding/list
-```
+**Versi manifest:** `1.4.0`
 
-**Versi:** `1.4.0`
-**Jenis:** ekstensi unpacked tanpa build tool atau dependency eksternal.
+**Build:** tidak diperlukan; tidak ada dependency eksternal atau bundler.
 
-## Mulai Cepat
+## Status Konfigurasi
 
-1. Pastikan browser berbasis Chromium dan sesi login platform target tersedia.
+Sebelum memuat ekstensi, isi dua placeholder berikut:
+
+1. `TARGET_ENDPOINT` di `injected.js`: bagian URL endpoint daftar yang harus diintersep.
+2. `[Endpoint for Overview]` di `background.js`: path endpoint untuk mengambil detail satu item.
+
+Keduanya bergantung pada kontrak API platform target. Jangan menghapus autentikasi dari browser; ekstensi memanfaatkan sesi login yang sedang aktif.
+
+## Cara Memasang
+
+1. Gunakan Chrome, Edge, atau browser Chromium lain yang mendukung Manifest V3.
 2. Buka `chrome://extensions` atau `edge://extensions`.
-3. Aktifkan **Developer mode**, pilih **Load unpacked**, lalu pilih folder repository ini.
-4. Buka halaman daftar booking atau bidding pada platform target.
-5. Reload halaman agar request daftar dapat ditangkap.
-6. Buka popup ekstensi dan gunakan **Reset & Full Scan** untuk pengambilan pertama.
+3. Aktifkan **Developer mode**.
+4. Pilih **Load unpacked** atau **Muat tanpa kemasan**.
+5. Pilih folder repository yang berisi `manifest.json`.
+6. Setelah mengubah source code, tekan **Reload** pada kartu ekstensi.
 
-Setelah konfigurasi API tertangkap, ekstensi menyimpan dataset secara lokal. Gunakan **Cek Order Baru** untuk sinkronisasi manual dan **Unduh Hasil JSON** untuk mengekspor hasil.
+Tidak ada perintah instalasi dependency atau build. Perubahan pada `injected.js` dan `background.js` baru berlaku setelah ekstensi di-reload, lalu halaman target di-reload agar content script dipasang ulang.
 
-## Fitur
+## Cara Menggunakan
 
-- Menangkap konfigurasi request endpoint daftar melalui `fetch` dan `XMLHttpRequest`.
-- Mendeteksi order realtime dari pesan WebSocket yang memiliki `id`, `booking_id`, atau `order_id`.
-- Mendukung navigasi SPA dengan memantau `history.pushState`, `history.replaceState`, dan `popstate`.
-- Menjalankan full scan hingga 50 halaman dengan ukuran 20 item per halaman.
-- Menambahkan detail setiap item melalui endpoint:
-
-  ```text
-  /api/line_haul/agency/booking/bidding/booking_overview?id={id}
-  ```
-
-- Menjalankan pengecekan order baru secara periodik setiap 1 menit menggunakan `chrome.alarms`.
-- Menghentikan incremental sync ketika menemukan ID yang sudah tersimpan.
-- Mencegah full scan dan incremental sync berjalan bersamaan dengan lock di `chrome.storage.local`.
-- Menampilkan jumlah data dan order baru pada popup serta badge ekstensi.
-- Mengunduh dataset tersimpan sebagai file JSON.
-
-## Persyaratan
-
-- Google Chrome, Microsoft Edge, atau browser Chromium lain yang mendukung Manifest V3.
-- Sesi login aktif pada platform target.
-- Halaman platform target harus terbuka agar request awal dapat ditangkap dan sesi autentikasi tetap tersedia.
-
-## Struktur File
-
-| File | Tanggung jawab |
-| --- | --- |
-| `manifest.json` | Konfigurasi Manifest V3, permission, service worker, popup, dan content script. |
-| `injected.js` | Berjalan di Main World untuk mengintersep `fetch`, XHR, WebSocket, dan navigasi SPA. |
-| `content.js` | Jembatan antara `window.postMessage` dan background service worker. |
-| `background.js` | Menjalankan full scan, incremental sync, enrichment, lock, alarm, storage, badge, dan notifikasi. |
-| `popup.html` | Tampilan popup monitor order. |
-| `popup.js` | Membaca storage, memperbarui statistik, menjalankan aksi popup, dan mengekspor JSON. |
-| `README.md` | Dokumentasi proyek. |
-
-## Instalasi dari Source
-
-Clone repository:
-
-   ```bash
-   git clone https://github.com/soalehj/booking-scraper-ext.git
-   cd booking-scraper-ext
-   ```
-
-Kemudian buka halaman ekstensi browser:
-   - Chrome: `chrome://extensions`
-   - Edge: `edge://extensions`
-1. Aktifkan **Developer mode**.
-2. Pilih **Load unpacked** atau **Muat tanpa kemasan**.
-3. Pilih folder yang berisi `manifest.json`.
-
-Setelah ada perubahan pada file ekstensi, buka halaman ekstensi dan tekan **Reload** pada ekstensi tersebut.
-
-## Penggunaan
-
-1. Buka platform target, login, lalu buka halaman daftar booking/bidding.
-2. Reload halaman dan tunggu request daftar selesai.
-3. Buka popup ekstensi:
+1. Login ke platform target dan buka halaman yang memuat daftar booking/order.
+2. Pastikan endpoint daftar sudah diisi di `injected.js`.
+3. Reload halaman target dan tunggu request daftar selesai agar konfigurasi API tersimpan.
+4. Buka popup ekstensi:
+   - **Reset & Full Scan** menghapus dataset lalu memindai maksimal 50 halaman.
    - **Cek Order Baru** menjalankan incremental sync secara manual.
-   - **Reset & Full Scan** menghapus dataset saat ini lalu memindai ulang maksimal 50 halaman.
-   - **Unduh Hasil JSON** mengunduh seluruh dataset yang tersimpan.
-4. Biarkan tab platform terbuka untuk menerima event WebSocket realtime. Alarm sinkronisasi berjalan setiap 1 menit setelah ekstensi di-install.
+   - **Unduh Hasil JSON** mengunduh seluruh dataset lokal.
+5. Biarkan halaman target tetap terbuka bila ingin menerima event order dari WebSocket.
 
-Pada pemakaian pertama, request daftar yang tertangkap memicu full scan otomatis jika dataset kosong. Jika dataset sudah ada, request tersebut memicu pengecekan order baru.
+Saat konfigurasi API baru tertangkap, ekstensi otomatis menjalankan full scan bila dataset kosong. Jika dataset sudah berisi data, ekstensi menjalankan incremental sync.
+
+## Fitur dan Batas Operasi
+
+- Mengintersep `fetch` dan `XMLHttpRequest` yang URL-nya memuat `TARGET_ENDPOINT`.
+- Menerima event WebSocket jika payload memiliki `id`, `booking_id`, atau `order_id`.
+- Menyimpan konfigurasi request, dataset, dan status sinkronisasi di `chrome.storage.local`.
+- Menjalankan alarm incremental sync setiap 1 menit setelah ekstensi dipasang.
+- Menggunakan lock agar full scan dan incremental sync tidak berjalan bersamaan.
+- Menampilkan jumlah dataset dan order baru pada popup serta badge ekstensi.
+- Mengirim notifikasi desktop ketika incremental sync menemukan order baru.
+- Full scan dibatasi 50 halaman, sedangkan incremental sync dibatasi 10 halaman.
+- Ukuran halaman yang digunakan adalah 20 item.
+- Enrichment berjalan dalam batch maksimal 5 item dengan jeda 150 ms.
 
 ## Alur Data
 
 ```mermaid
 flowchart TD
     A[Halaman platform] --> B[injected.js - Main World]
-    B -->|window.postMessage| C[content.js - Isolated World]
+    B -->|window.postMessage| C[content.js]
     C -->|chrome.runtime.sendMessage| D[background.js - Service Worker]
     D --> E{Dataset kosong?}
-    E -->|Ya| F[Full scan maksimal 50 halaman]
-    E -->|Tidak| G[Incremental sync maksimal 10 halaman]
-    B -->|WebSocket order baru| D
-    F --> H[Fetch booking_overview per item]
+    E -->|Ya| F[Full scan 1-50 halaman]
+    E -->|Tidak| G[Incremental sync 1-10 halaman]
+    B -->|WebSocket order| C
+    F --> H[Fetch endpoint overview]
     G --> H
     D --> I[chrome.storage.local]
     I --> J[popup.js]
-    J --> K[Statistik atau export JSON]
+    J --> K[Statistik atau JSON]
 ```
 
 ### Full scan
 
-Full scan mengambil halaman mulai dari halaman 1. Untuk request `POST`, parameter paginasi ditambahkan ke body. Untuk request selain `POST`, parameter tersebut ditambahkan ke query string. Beberapa nama parameter yang dikirim untuk kompatibilitas backend adalah `page`, `page_no`, `pageNo`, `page_number`, `current`, `pageSize`, `page_size`, `size`, dan `offset`.
+Scan dimulai dari halaman 1 dan berhenti ketika response gagal, response kosong, tidak ada item baru, atau batas 50 halaman tercapai. Untuk request `POST`, parameter pagination ditambahkan ke body. Untuk method lain, parameter tersebut ditambahkan ke query string.
 
-Scan berhenti ketika response kosong, tidak berhasil, tidak menemukan item baru, atau mencapai 50 halaman. Item dideduplikasi berdasarkan salah satu field berikut:
+Parameter yang dikirim untuk kompatibilitas backend adalah `page`, `page_no`, `pageNo`, `page_number`, `current`, `pageSize`, `page_size`, `size`, dan `offset`.
 
-```text
-id, booking_id, id_booking, booking_no, code
-```
+Item dideduplikasi menggunakan field pertama yang tersedia dari `id`, `booking_id`, `id_booking`, `booking_no`, atau `code`. Item yang berhasil dikumpulkan kemudian diperkaya melalui endpoint overview.
 
 ### Incremental sync
 
-Incremental sync dimulai dari halaman pertama dan memeriksa maksimal 10 halaman. Item baru dikumpulkan sampai ditemukan ID yang sudah ada di dataset. Item baru ditempatkan di awal dataset, lalu diperkaya dengan detail overview.
+Sync dimulai dari halaman terbaru dan mengumpulkan item yang ID-nya belum ada di dataset. Proses berhenti ketika menemukan ID yang sudah tersimpan, tidak ada item baru pada halaman, response kosong, atau batas 10 halaman tercapai. Item baru ditambahkan di awal dataset.
 
-Alarm background dibuat dengan interval 1 menit saat ekstensi di-install. Selain itu, pengecekan dapat dijalankan manual dari popup.
+### Realtime WebSocket
 
-### Enrichment
+`injected.js` memeriksa pesan WebSocket berbentuk JSON. Payload yang memiliki field ID yang dikenali diteruskan ke service worker dan ditambahkan ke awal dataset setelah enrichment. Payload tanpa ID diabaikan.
 
-Setiap item yang memiliki ID akan diminta detailnya melalui endpoint overview. Request dijalankan dalam batch berisi maksimal 5 item dengan jeda 150 ms antar batch. Jika detail gagal, item tetap disimpan dengan `overview: null` dan informasi error bila tersedia.
-
-## Data yang Disimpan
-
-Ekstensi menggunakan `chrome.storage.local` dengan key berikut:
+## Data Lokal
 
 | Key | Isi |
 | --- | --- |
-| `apiConfig` | URL, method, header, body, dan timestamp request daftar yang terakhir tertangkap. |
-| `scannedDataset` | Array order yang sudah dikumpulkan dan, bila memungkinkan, diperkaya dengan `overview`. |
-| `lastNewOrderCount` | Jumlah item baru pada sync terakhir yang menemukan order baru. |
-| `lastSyncTimestamp` | Waktu sync terakhir dalam format timestamp millisecond. |
-| `isSyncLocked` | Lock untuk mencegah dua pipeline berjalan bersamaan. |
+| `apiConfig` | URL, method, header, body, dan timestamp request daftar terakhir yang tertangkap. |
+| `scannedDataset` | Array item hasil scan, termasuk `overview` bila enrichment berhasil. |
+| `lastNewOrderCount` | Jumlah item baru pada sync terakhir yang menemukan data baru. |
+| `lastSyncTimestamp` | Waktu sync terakhir dalam Unix timestamp millisecond. |
+| `isSyncLocked` | Penanda proses scan/sync yang sedang berjalan. |
 
-Header request disaring sebelum dipakai ulang. Header browser tertentu seperti `host`, `origin`, `referer`, `user-agent`, dan header `sec-fetch-*` tidak diteruskan.
+Header browser tertentu, termasuk `host`, `origin`, `referer`, `user-agent`, `content-length`, dan `sec-fetch-*`, disaring sebelum request diulang oleh service worker.
 
-## Permission
+## Penyesuaian API
 
-`manifest.json` meminta permission berikut:
+### Endpoint daftar
 
-- `storage`: menyimpan konfigurasi dan dataset lokal.
-- `activeTab` dan `scripting`: dukungan interaksi dengan tab aktif.
-- `alarms`: menjalankan incremental sync periodik.
-- `notifications`: memberi notifikasi ketika order baru ditemukan.
-- `<all_urls>`: menjalankan script dan melakukan request pada halaman atau origin yang diperlukan oleh aplikasi target.
-
-> Karena ekstensi membaca request aplikasi dan menyimpan header/body konfigurasi API secara lokal, gunakan hanya pada profil browser dan platform yang memang Anda berwenang akses.
-
-## Penyesuaian untuk Platform Lain
-
-### Mengganti endpoint daftar
-
-Ubah konstanta berikut di `injected.js`:
+Edit konstanta berikut di `injected.js`:
 
 ```js
-const TARGET_ENDPOINT = '/api/line_haul/agency/booking/bidding/list';
+const TARGET_ENDPOINT = '[Endpoint URL]';
 ```
 
-Nilai ini menentukan request mana yang akan ditangkap sebagai konfigurasi API.
+Nilai ini dicocokkan dengan `url.includes(TARGET_ENDPOINT)`, jadi dapat berupa path atau potongan URL yang cukup spesifik.
 
-### Menyesuaikan field ID
+### Endpoint detail
 
-Jika platform memakai nama field ID lain, tambahkan field tersebut pada `getItemId` di `background.js`:
+Edit bagian berikut di `background.js` dan ganti placeholder dengan path endpoint platform:
 
 ```js
-function getItemId(item) {
-  if (!item || typeof item !== 'object') return '';
-  return String(item.id || item.booking_id || item.id_booking || item.booking_no || item.code || '');
-}
+const overviewUrl = new URL(`${originUrl.origin}[Endpoint for Overview]`);
 ```
 
-### Menyesuaikan bentuk response
+ID item dikirim sebagai query parameter `id`.
 
-Fungsi `extractItemsFromResponse` sudah mendukung response berbentuk array dan beberapa lokasi umum seperti `data`, `data.list`, `data.items`, `data.rows`, `data.records`, `data.booking_list`, `items`, `rows`, dan `result`. Tambahkan mapping di fungsi tersebut bila response platform berbeda.
+### Format response
+
+`extractItemsFromResponse` mendukung array langsung serta array pada lokasi berikut:
+
+```text
+data, data.list, data.items, data.rows, data.records,
+data.booking_list, items, rows, result
+```
+
+Jika API menggunakan bentuk lain, tambahkan mapping pada fungsi tersebut. Jika nama ID berbeda, sesuaikan `getItemId` di `background.js`.
 
 ## Troubleshooting
 
+### Konfigurasi API tidak tertangkap
+
+Pastikan `TARGET_ENDPOINT` benar, halaman target sudah di-reload setelah ekstensi aktif, dan request daftar benar-benar terjadi. Pemeriksaan dilakukan melalui console halaman dan service worker pada halaman ekstensi browser.
+
+### Full scan tidak menghasilkan data
+
+Periksa URL endpoint, method, body pagination, bentuk response, dan nama field ID. Pastikan juga `[Endpoint for Overview]` sudah diganti; endpoint detail yang salah dapat membuat enrichment gagal walaupun data daftar berhasil diambil.
+
 ### Badge menampilkan `ERR`
 
-Pastikan sesi login masih aktif, halaman platform dapat memuat daftar order, dan request pertama sudah terjadi setelah halaman di-reload. Periksa error pada service worker melalui halaman ekstensi browser.
+Pastikan sesi login masih aktif, konfigurasi API tersimpan, dan endpoint dapat diakses dari sesi browser tersebut. Periksa log service worker untuk pesan error yang lebih spesifik.
 
-### Full scan tidak menemukan data
+### Order baru tidak muncul
 
-Periksa hal berikut:
+Pastikan dataset awal sudah pernah dibuat, konfigurasi API masih ada, dan halaman target tetap terbuka untuk event WebSocket. Incremental sync hanya memeriksa maksimal 10 halaman dan berhenti setelah menemukan ID lama.
 
-- URL request benar-benar mengandung endpoint `TARGET_ENDPOINT`.
-- Response endpoint berisi array item pada salah satu bentuk yang didukung.
-- Method dan body pagination dapat diterima oleh backend.
-- Tidak ada lock lama pada `isSyncLocked` setelah proses sebelumnya terhenti.
+### Detail item kosong
 
-### Data berhenti sebelum semua order terbaca
+Item tanpa ID tidak dapat diperkaya. Jika request detail gagal, item tetap disimpan dengan `overview: null`; kegagalan HTTP atau jaringan dicatat pada `overview_error`.
 
-Full scan memiliki batas 50 halaman dan ukuran halaman 20 item. Backend juga dapat menghentikan scan jika parameter pagination yang dikirim tidak sesuai. Sesuaikan `buildRequestPayload` dengan kontrak API target.
+## Struktur File
 
-### Order baru tidak muncul otomatis
+| File | Tanggung jawab |
+| --- | --- |
+| `manifest.json` | Konfigurasi Manifest V3, permission, popup, service worker, dan content script. |
+| `injected.js` | Interceptor `fetch`, XHR, WebSocket, dan patch navigasi history pada Main World. |
+| `content.js` | Menjembatani `window.postMessage` dengan service worker. |
+| `background.js` | Menjalankan scan, sync, enrichment, storage, lock, alarm, badge, dan notifikasi. |
+| `popup.html` | UI popup monitor. |
+| `popup.js` | Statistik, tombol aksi, dan ekspor JSON. |
 
-Pastikan dataset awal sudah pernah dibuat, halaman platform masih terbuka, dan konfigurasi `apiConfig` masih tersimpan. Incremental sync hanya berjalan pada maksimal 10 halaman dan berhenti ketika menemukan ID yang sudah ada.
+## Permission dan Privasi
 
-### Overview tidak lengkap
+Ekstensi meminta `storage`, `activeTab`, `scripting`, `alarms`, `notifications`, serta `host_permissions` `<all_urls>`. Data dan konfigurasi request disimpan di profil browser melalui `chrome.storage.local`; repository ini tidak menyediakan server backend atau mekanisme upload eksternal.
 
-Item tanpa ID tidak dapat diminta detailnya. Untuk error HTTP atau error jaringan, item tetap disimpan dan field `overview_error` dapat berisi penyebab kegagalan.
+Karena ekstensi membaca request aplikasi dan menyimpan sebagian header/body secara lokal, gunakan hanya pada akun dan platform yang memang Anda berwenang akses. Event, response, dan credential sesi tetap mengikuti kebijakan serta batasan keamanan browser.
 
-## Batasan Teknis
+## Pengembangan
 
-- Ekstensi bergantung pada struktur endpoint dan response platform target.
-- Full scan dibatasi maksimal 50 halaman; incremental sync dibatasi maksimal 10 halaman.
-- Data disimpan lokal pada profil browser dan tidak dikirim ke server eksternal oleh ekstensi secara langsung.
-- Sinkronisasi background membutuhkan konfigurasi API yang sudah tertangkap sebelumnya.
-- Event WebSocket hanya diproses jika payload memiliki field ID yang dikenali.
-- Tidak ada test runner atau proses build otomatis di repository ini.
+Repository ini tidak memiliki test runner, dependency, atau proses build otomatis. Validasi utama dilakukan dengan memuat ulang ekstensi, memeriksa console halaman target, memeriksa log service worker, dan menguji popup pada browser Chromium.

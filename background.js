@@ -99,7 +99,7 @@ async function fetchSingleOverview(item, listApiUrl, headers) {
 
   try {
     const originUrl = new URL(listApiUrl);
-    const overviewUrl = new URL(`${originUrl.origin}/api/line_haul/agency/booking/bidding/booking_overview`);
+    const overviewUrl = new URL(`${originUrl.origin}[Endpoint for Overview]`); // Replace with the actual endpoint for fetching overview
     overviewUrl.searchParams.set('id', itemId);
 
     const res = await fetch(overviewUrl.toString(), {

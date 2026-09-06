@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Scrapper Order Jeje",
+  "name": "Scrapper Order",
   "version": "1.4.0",
   "description": "Pemindaian otomatis & sinkronisasi order baru secara incremental.",
   "permissions": ["storage", "activeTab", "scripting", "alarms", "notifications"],
