@@ -13,7 +13,11 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 function sanitizeHeaders(headersObj) {
-  const forbidden = ['host', 'origin', 'referer', 'user-agent', 'content-length', 'sec-fetch-dest', 'sec-fetch-mode', 'sec-fetch-site'];
+  const forbidden = [
+    'host', 'origin', 'referer', 'user-agent', 'content-length',
+    'sec-fetch-dest', 'sec-fetch-mode', 'sec-fetch-site', 'cookie',
+    'set-cookie', 'authorization', 'proxy-authorization', 'x-api-key', 'x-auth-token'
+  ];
   const clean = {};
   if (headersObj && typeof headersObj === 'object') {
     Object.entries(headersObj).forEach(([k, v]) => {
@@ -21,6 +25,31 @@ function sanitizeHeaders(headersObj) {
     });
   }
   return clean;
+}
+
+function isTrustedCapturedConfig(payload, sender) {
+  if (!payload || typeof payload !== 'object' || typeof payload.url !== 'string') return false;
+  if (!sender.tab?.url || !['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(payload.method)) return false;
+
+  try {
+    const apiUrl = new URL(payload.url);
+    const pageUrl = new URL(sender.tab.url);
+    return ['http:', 'https:'].includes(apiUrl.protocol) && apiUrl.origin === pageUrl.origin;
+  } catch (err) {
+    return false;
+  }
+}
+
+function isValidRealtimePayload(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
+  const itemId = getItemId(payload);
+  if (itemId.length === 0 || itemId.length > 200) return false;
+
+  try {
+    return JSON.stringify(payload).length <= 100000;
+  } catch (err) {
+    return false;
+  }
 }
 
 function getItemId(item) {
@@ -283,9 +312,19 @@ async function checkForNewOrders() {
 }
 
 // 3. REALTIME WEBSOCKET PUSH HANDLER
-async function handleRealtimeOrderPush(rawPayload) {
+async function handleRealtimeOrderPush(rawPayload, sender) {
   const { scannedDataset = [], apiConfig } = await chrome.storage.local.get(['apiConfig', 'scannedDataset']);
-  const incomingItems = Array.isArray(rawPayload) ? rawPayload : (rawPayload && typeof rawPayload === 'object' ? [rawPayload] : []);
+  if (!apiConfig?.url || !sender.tab?.url) return;
+
+  try {
+    if (new URL(apiConfig.url).origin !== new URL(sender.tab.url).origin) return;
+  } catch (err) {
+    return;
+  }
+
+  const incomingItems = Array.isArray(rawPayload)
+    ? rawPayload.filter(isValidRealtimePayload).slice(0, 100)
+    : (isValidRealtimePayload(rawPayload) ? [rawPayload] : []);
   if (incomingItems.length === 0) return;
 
   const existingIdSet = new Set(scannedDataset.map(item => getItemId(item)).filter(Boolean));
@@ -313,15 +352,29 @@ async function handleRealtimeOrderPush(rawPayload) {
 
 // Event Router
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'AUTO_START_SCAN') {
-    chrome.storage.local.get('scannedDataset', (res) => {
-      if (!res.scannedDataset || res.scannedDataset.length === 0) {
-        executeFullScanPipeline(sendResponse);
-      } else {
-        checkForNewOrders().then(() => sendResponse({ success: true }));
+  if (message.action === 'CAPTURED_API_CONFIG') {
+    if (!isTrustedCapturedConfig(message.payload, sender)) return false;
+
+    const apiConfig = {
+      ...message.payload,
+      headers: sanitizeHeaders(message.payload.headers)
+    };
+    chrome.storage.local.set({ apiConfig }, () => {
+      if (chrome.runtime.lastError) {
+        sendResponse({ success: false, error: 'Konfigurasi tidak dapat disimpan.' });
+        return;
       }
+      chrome.storage.local.get('scannedDataset', (res) => {
+        if (!res.scannedDataset || res.scannedDataset.length === 0) {
+          executeFullScanPipeline(sendResponse);
+        } else {
+          checkForNewOrders().then(() => sendResponse({ success: true }));
+        }
+      });
     });
     return true;
+  } else if (message.action === 'AUTO_START_SCAN') {
+    return false;
   } else if (message.action === 'MANUAL_FULL_SCAN') {
     executeFullScanPipeline(sendResponse);
     return true;
@@ -329,7 +382,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     checkForNewOrders().then(() => sendResponse({ success: true }));
     return true;
   } else if (message.action === 'PROCESS_REALTIME_ORDER') {
-    handleRealtimeOrderPush(message.payload);
+    if (!sender.tab?.url || !isValidRealtimePayload(message.payload)) return false;
+    handleRealtimeOrderPush(message.payload, sender);
     return true;
   }
 });

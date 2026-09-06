@@ -3,7 +3,7 @@
   "name": "Scrapper Order",
   "version": "1.4.0",
   "description": "Pemindaian otomatis & sinkronisasi order baru secara incremental.",
-  "permissions": ["storage", "activeTab", "scripting", "alarms", "notifications"],
+  "permissions": ["storage", "alarms", "notifications"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"

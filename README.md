@@ -19,6 +19,22 @@ Keduanya bergantung pada kontrak API platform target. Jangan menghapus autentika
 
 ## Cara Memasang
 
+### Untuk penggunaan tanpa Developer mode
+
+Chrome tidak mengizinkan ekstensi lokal dari folder atau file ZIP dipasang sebagai ekstensi biasa tanpa Developer mode. Ini adalah aturan keamanan browser dan tidak dapat diubah oleh kode ekstensi.
+
+Untuk instalasi tanpa Developer mode:
+
+1. Isi semua placeholder endpoint dan uji ekstensi menggunakan **Load unpacked**.
+2. Jalankan `./build-release.sh` untuk membuat `dist/booking-scraper-extension.zip`.
+3. Daftarkan akun developer di [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole).
+4. Pilih **New item**, unggah file ZIP tersebut, lengkapi listing, privacy policy, dan deklarasi permission, lalu kirim untuk review.
+5. Setelah disetujui, pengguna memasang ekstensi dari halaman Chrome Web Store tanpa mengaktifkan Developer mode.
+
+Setiap pembaruan harus dibuat sebagai ZIP baru, nomor `version` di `manifest.json` harus dinaikkan, lalu paket diunggah sebagai versi baru. Untuk organisasi internal, alternatifnya adalah distribusi melalui kebijakan enterprise Chrome; itu memerlukan administrasi perangkat dan bukan perubahan pada source code.
+
+### Untuk pengujian lokal
+
 1. Gunakan Chrome, Edge, atau browser Chromium lain yang mendukung Manifest V3.
 2. Buka `chrome://extensions` atau `edge://extensions`.
 3. Aktifkan **Developer mode**.
@@ -26,7 +42,7 @@ Keduanya bergantung pada kontrak API platform target. Jangan menghapus autentika
 5. Pilih folder repository yang berisi `manifest.json`.
 6. Setelah mengubah source code, tekan **Reload** pada kartu ekstensi.
 
-Tidak ada perintah instalasi dependency atau build. Perubahan pada `injected.js` dan `background.js` baru berlaku setelah ekstensi di-reload, lalu halaman target di-reload agar content script dipasang ulang.
+Tidak ada dependency eksternal. Skrip `build-release.sh` hanya membuat paket ZIP untuk diunggah ke Chrome Web Store; skrip tersebut tidak menghilangkan kebutuhan Developer mode untuk pengujian lokal. Perubahan pada `injected.js` dan `background.js` baru berlaku setelah ekstensi di-reload, lalu halaman target di-reload agar content script dipasang ulang.
 
 ## Cara Menggunakan
 
@@ -168,7 +184,11 @@ Item tanpa ID tidak dapat diperkaya. Jika request detail gagal, item tetap disim
 
 ## Permission dan Privasi
 
-Ekstensi meminta `storage`, `activeTab`, `scripting`, `alarms`, `notifications`, serta `host_permissions` `<all_urls>`. Data dan konfigurasi request disimpan di profil browser melalui `chrome.storage.local`; repository ini tidak menyediakan server backend atau mekanisme upload eksternal.
+Ekstensi meminta `storage`, `alarms`, `notifications`, serta `host_permissions` `<all_urls>`. Data dan konfigurasi request disimpan di profil browser melalui `chrome.storage.local`; repository ini tidak menyediakan server backend atau mekanisme upload eksternal.
+
+Credential pada header seperti `Authorization`, `Cookie`, `X-API-Key`, dan token autentikasi lain tidak disimpan oleh ekstensi. Request ulang menggunakan cookie sesi browser melalui `credentials: include`. Konfigurasi hanya diterima jika URL API memiliki origin yang sama dengan halaman pengirim, dan pesan dari halaman lain ditolak.
+
+Sebelum publikasi, ganti `<all_urls>` pada `manifest.json` dengan origin platform target yang spesifik, misalnya `https://app.example.com/*`, pada `content_scripts.matches` dan `host_permissions`. Permission luas hanya dipertahankan di template karena domain platform target belum diketahui.
 
 Karena ekstensi membaca request aplikasi dan menyimpan sebagian header/body secara lokal, gunakan hanya pada akun dan platform yang memang Anda berwenang akses. Event, response, dan credential sesi tetap mengikuti kebijakan serta batasan keamanan browser.
 

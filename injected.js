@@ -18,6 +18,18 @@
       parsedHeaders = headers;
     }
 
+    const sensitiveHeaders = new Set([
+      'authorization',
+      'cookie',
+      'set-cookie',
+      'proxy-authorization',
+      'x-api-key',
+      'x-auth-token'
+    ]);
+    parsedHeaders = Object.fromEntries(
+      Object.entries(parsedHeaders).filter(([key]) => !sensitiveHeaders.has(key.toLowerCase()))
+    );
+
     let parsedBody = null;
     if (requestBody) {
       try {
@@ -34,7 +46,7 @@
         body: parsedBody,
         timestamp: Date.now()
       }
-    }, '*');
+    }, window.location.origin);
   }
 
   // 1. SPA Navigation Patch
